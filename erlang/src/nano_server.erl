@@ -15,9 +15,12 @@
 
 start() ->
   {ok, Listen} = gen_tcp:listen(2345, [binary, {packet, 4}, {reuseaddr, true}, {active, true}]),
+  seq_loop(Listen).
+
+seq_loop(Listen) ->
   {ok, Socket} = gen_tcp:accept(Listen),
-  gen_tcp:close(Listen),
-  loop(Socket).
+  loop(Socket),
+  seq_loop(Listen).
 
 loop(Socket) ->
   receive
@@ -30,7 +33,7 @@ loop(Socket) ->
       gen_tcp:send(Socket, term_to_binary(Reply)),
       loop(Socket);
     {tcp_closed, Socket} ->
-      io:format("Server socket closed~n")
+      io:format("Server socket closed: ~p~n", [Socket])
   end.
 string2value(Str) ->
   {ok, Tokens, _} = erl_scan:string(Str ++ "."),
