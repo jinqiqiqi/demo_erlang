@@ -15,12 +15,12 @@
 
 start() ->
   {ok, Listen} = gen_tcp:listen(2345, [binary, {packet, 4}, {reuseaddr, true}, {active, true}]),
-  seq_loop(Listen).
+  spawn(fun() -> par_connect(Listen) end).
 
-seq_loop(Listen) ->
+par_connect(Listen) ->
   {ok, Socket} = gen_tcp:accept(Listen),
-  loop(Socket),
-  seq_loop(Listen).
+  spawn(fun() -> par_connect(Listen) end),
+  loop(Socket).
 
 loop(Socket) ->
   receive

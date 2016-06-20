@@ -20,5 +20,9 @@ eval(Str) ->
       io:format("Client received binary = ~p~n", [Bin]),
       Val = binary_to_term(Bin),
       io:format("Client result = ~p~n", [Val]),
+      gen_tcp:close(Socket);
+    _Other ->
+      io:format("error"),
       gen_tcp:close(Socket)
+
   end.
