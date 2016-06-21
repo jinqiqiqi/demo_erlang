@@ -31,6 +31,8 @@ loop(Socket) ->
       Reply = string2value(Str),
       io:format("Server replying = ~p~n", [Reply]),
       gen_tcp:send(Socket, term_to_binary(Reply)),
+      {ok, {Ip, Port}} = inet:peername(Socket),
+      io:format("Request from: ~p | ~p~n", [Ip, Port]),
       loop(Socket);
     {tcp_closed, Socket} ->
       io:format("Server socket closed: ~p~n", [Socket])
