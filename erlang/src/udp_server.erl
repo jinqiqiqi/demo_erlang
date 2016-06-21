@@ -22,8 +22,9 @@ server(Port) ->
 
 loop(Socket) ->
   receive
-    {udp, Socket, Host, Port, Bin} = Msg ->
-      io:format("Server received: ~p~n", [Msg]),
+  % I removed the Msg variable here.
+    {udp, Socket, Host, Port, Bin} ->
+      io:format("Server received: ~p~n", [{Port, Bin}]),
       N = binary_to_term(Bin),
       Fac = fac(N),
       gen_udp:send(Socket, Host, Port, term_to_binary(Fac)),
