@@ -25,9 +25,9 @@ loop(Socket) ->
   % I removed the Msg variable here.
     {udp, Socket, Host, Port, Bin} ->
       io:format("Server received: ~p~n", [{Port, Bin}]),
-      N = binary_to_term(Bin),
+      {Ref, N} = binary_to_term(Bin),
       Fac = fac(N),
-      gen_udp:send(Socket, Host, Port, term_to_binary(Fac)),
+      gen_udp:send(Socket, Host, Port, term_to_binary({Ref, Fac})),
       loop(Socket)
   end.
 
@@ -38,17 +38,25 @@ fac(N) -> N* fac(N-1).
 
 client(N) ->
   {ok, Socket} = gen_udp:open(0, [binary]),
+  Ref = make_ref(),
   io:format("Client opened socket: ~p~n", [Socket]),
-  ok = gen_udp:send(Socket, "localhost", 4000, term_to_binary(N)),
-  Value = receive
-            {udp, Socket, _, _, Bin} = Msg ->
-              io:format("Client received: ~p~n", [Msg]),
-              binary_to_term(Bin)
-          after 2000 ->
-            0
-          end,
-  gen_udp:close(Socket),
-  Value.
+  ok = gen_udp:send(Socket, "localhost", 4000, term_to_binary({Ref, N})),
+  wait_for_ref(Socket, Ref).
+
+wait_for_ref(Socket, Ref) ->
+  receive
+    {udp, Socket, _Host, _Port, Bin} ->
+      case binary_to_term(Bin) of
+        {Ref, Val} ->
+          io:format("new Value is: ~p~n", [Val]);
+        {_SomeOtherRef, _} ->
+          wait_for_ref(Socket, Ref)
+      end
+  after 2000 ->
+    io:format(" timeout: 0~n")
+  end,
+  gen_udp:close(Socket).
+
 
 
 
